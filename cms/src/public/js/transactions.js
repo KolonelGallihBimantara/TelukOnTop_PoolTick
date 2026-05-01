@@ -32,7 +32,7 @@ function renderTransactions(transactions) {
   const trxEl = document.getElementById('transaksi');
   let total = 0;
 
-  // 🔥 GROUPING DATA
+  //GROUPING DATA
   const grouped = {};
 
   transactions.forEach(i => {
@@ -53,7 +53,7 @@ function renderTransactions(transactions) {
     total += i.price;
   });
 
-  // 🔥 RENDER HASIL GROUP
+  //RENDER HASIL GROUP
   trxEl.innerHTML = Object.values(grouped).map(i => {
     return `
       <tr>
@@ -87,32 +87,58 @@ async function hapusSemuaTransaksi() {
 
 // Fungsi untuk download data ke format Excel .xlsx
 async function downloadExcel() {
-  const [dataTrx, dataTickets] = await Promise.all([
-    fetch(API_TRANSACTIONS).then(r => r.json()),
-    fetch(API_TICKETS).then(r => r.json())
-  ]);
+  const transactions = await fetch(API_TRANSACTIONS).then(r => r.json());
 
-  if (!dataTrx.length) return alert("Tidak ada data untuk diunduh!");
-  let totalKeseluruhan = 0;
+  //GROUPING
+  const grouped = {};
 
-  const reportData = dataTrx.map((trx, index) => {
-    const tiket = dataTickets.find(t => t.id == trx.ticketId);
-    const harga = parseInt(trx.price) || 0;
-    totalKeseluruhan += harga;
-    return {
-      "No": index + 1,
-      "ID Transaksi": trx.id,
-      "Nama Pembeli": trx.name,
-      "Nama Tiket": tiket ? tiket.name : "Tiket Dihapus",
-      "Harga (Rp)": harga,
-      "Waktu Transaksi": new Date(trx.createdAt).toLocaleString('id-ID')
-    };
+  transactions.forEach(i => {
+    const key = i.name + '-' + (i.ticket?.name || '-');
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        name: i.name,
+        ticket: i.ticket?.name || '-',
+        qty: 0,
+        price: i.price,
+        createdAt: i.createdAt
+      };
+    }
+
+    grouped[key].qty += 1;
   });
 
-  reportData.push({ "Nama Pembeli": "TOTAL PENDAPATAN", "Harga (Rp)": totalKeseluruhan });
+  //HEADER
+  let csv = "No,Nama,Tiket,Qty,Nominal,Waktu\n";
+  let no = 1;
+  let grandTotal = 0;
 
-  const ws = XLSX.utils.json_to_sheet(reportData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Laporan Penjualan");
-  XLSX.writeFile(wb, `Laporan_PoolTick_${new Date().getTime()}.xlsx`);
+  Object.values(grouped).forEach(i => {
+    const d = new Date(i.createdAt);
+
+    const waktu = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ` +
+                  `${String(d.getHours()).padStart(2,'0')}.` +
+                  `${String(d.getMinutes()).padStart(2,'0')}.` +
+                  `${String(d.getSeconds()).padStart(2,'0')}`;
+
+    const total = i.price * i.qty;
+    grandTotal += total;
+
+    csv += `${no},${i.name},${i.ticket},${i.qty}x,${total},"${waktu}"\n`;
+    no++;
+  });
+
+  //TOTAL DI BAWAH
+  csv += `\nTOTAL PENDAPATAN,,, ,${grandTotal},\n`;
+
+  //DOWNLOAD
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'laporan-transaksi.csv';
+  a.click();
+
+  URL.revokeObjectURL(url);
 }
