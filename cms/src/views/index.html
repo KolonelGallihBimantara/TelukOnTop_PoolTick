@@ -21,11 +21,11 @@
       <p class="text-muted small mb-4">Portal Administrasi Kolam Renang</p>
       <div class="text-start mb-3">
           <label class="small fw-bold mb-1">Username</label>
-          <input type="text" id="username" class="form-control" placeholder="Admin Username">
+          <input type="text" id="username" class="form-control" placeholder="Username">
       </div>
       <div class="text-start mb-4">
           <label class="small fw-bold mb-1">Password</label>
-          <input type="password" id="password" class="form-control" placeholder="••••••••">
+          <input type="password" id="password" class="form-control" placeholder="Password">
       </div>
       <button onclick="login()" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow">Login Sekarang</button>
   </div>
@@ -40,7 +40,11 @@
           <i class="bi bi-person-circle me-1"></i> <b>Admin</b>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-          <li><button onclick="location.reload()" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
+          <li>
+            <button onclick="logout()" class="dropdown-item text-danger">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </li>
         </ul>
       </div>
     </div>
