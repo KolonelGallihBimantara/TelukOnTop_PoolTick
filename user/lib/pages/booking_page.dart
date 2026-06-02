@@ -13,12 +13,25 @@ class _BookingPageState extends State<BookingPage> {
   final Map<int, int> _cart = {};
   List _cachedTickets = [];
 
-  // Palette Warna Modern
-  final Color primaryBlue = const Color(0xFF0061FF);
-  final Color accentBlue = const Color(0xFF60A5FA);
-  final Color bgGray = const Color(0xFFF8FAFC);
+  // ==========================================
+  // PERUBAHAN TAHAP 1: Kunci API & Palet Warna Baru
+  // ==========================================
+  late Future<List<dynamic>> _futureTickets;
+
+  final Color primaryBlue = const Color(0xFF0F172A); // Slate Ultra Dark
+  final Color accentBlue = const Color(0xFF2563EB);  // Royal Blue Modern
+  final Color bgGray = const Color(0xFFF8FAFC);      // Off-white bersih
   final Color surfaceWhite = Colors.white;
-  final Color textDark = const Color(0xFF1E293B);
+  final Color textDark = const Color(0xFF0F172A);
+  final Color textMuted = const Color(0xFF64748B);   // Warna teks sekunder
+
+  @override
+  void initState() {
+    super.initState();
+    // Memicu API hanya 1 kali saat halaman pertama kali dibuka
+    _futureTickets = ApiService.getTickets().then((value) => value as List<dynamic>);
+  }
+  // ==========================================
 
   int _calculateTotal() {
     int total = 0;
@@ -65,8 +78,6 @@ class _BookingPageState extends State<BookingPage> {
       ),
     );
   }
-
-  // --- UI BUILDERS ---
 
   Widget _buildAppBar() {
     return SliverAppBar(
@@ -271,8 +282,6 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  // --- LOGIC SECTION ---
-
   void _startPayment() {
     if (buyerController.text.isEmpty) {
       _showSnack("Mohon isi nama lengkap Anda", Colors.orange);
@@ -308,7 +317,7 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   void _showBankSubSheet() {
-    Navigator.pop(context); // Tutup menu utama
+    Navigator.pop(context);
     _showSubSheet("Pilih Bank", [
       {"n": "BCA", "d": "Bank Central Asia", "i": Icons.account_balance},
       {"n": "Mandiri", "d": "Bank Mandiri", "i": Icons.account_balance},
@@ -318,7 +327,7 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   void _showWalletSubSheet() {
-    Navigator.pop(context); // Tutup menu utama
+    Navigator.pop(context);
     _showSubSheet("Pilih E-Wallet", [
       {"n": "Dana", "d": "Dompet Digital DANA", "i": Icons.smartphone_rounded},
       {"n": "OVO", "d": "OVO Cash", "i": Icons.smartphone_rounded},
@@ -441,7 +450,7 @@ class _BookingPageState extends State<BookingPage> {
       }
     }
 
-    Navigator.pop(context); // Tutup Loading
+    Navigator.pop(context);
     if (allOk) {
       _showSnack("Tiket berhasil dipesan via $method!", Colors.green);
       setState(() => _cart.clear());
