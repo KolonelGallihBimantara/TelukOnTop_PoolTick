@@ -12,26 +12,21 @@ class _BookingPageState extends State<BookingPage> {
   final TextEditingController buyerController = TextEditingController();
   final Map<int, int> _cart = {};
   List _cachedTickets = [];
-
-  // ==========================================
-  // PERUBAHAN TAHAP 1: Kunci API & Palet Warna Baru
-  // ==========================================
+  
   late Future<List<dynamic>> _futureTickets;
 
-  final Color primaryBlue = const Color(0xFF0F172A); // Slate Ultra Dark
-  final Color accentBlue = const Color(0xFF2563EB);  // Royal Blue Modern
-  final Color bgGray = const Color(0xFFF8FAFC);      // Off-white bersih
+  final Color primaryBlue = const Color(0xFF0F172A); 
+  final Color accentBlue = const Color(0xFF2563EB);  
+  final Color bgGray = const Color(0xFFF8FAFC);      
   final Color surfaceWhite = Colors.white;
   final Color textDark = const Color(0xFF0F172A);
-  final Color textMuted = const Color(0xFF64748B);   // Warna teks sekunder
+  final Color textMuted = const Color(0xFF64748B);   
 
   @override
   void initState() {
     super.initState();
-    // Memicu API hanya 1 kali saat halaman pertama kali dibuka
     _futureTickets = ApiService.getTickets().then((value) => value as List<dynamic>);
   }
-  // ==========================================
 
   int _calculateTotal() {
     int total = 0;
@@ -115,14 +110,24 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
+  // ==========================================
+  // PERUBAHAN TAHAP 2: Header, Input & List Baru
+  // ==========================================
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: primaryBlue),
-        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: accentBlue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: accentBlue),
+        ),
+        const SizedBox(width: 12),
         Text(
           title,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textDark, letterSpacing: -0.3),
         ),
       ],
     );
@@ -132,19 +137,30 @@ class _BookingPageState extends State<BookingPage> {
     return Container(
       decoration: BoxDecoration(
         color: surfaceWhite,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xFF1E293B).withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: TextField(
         controller: buyerController,
-        style: TextStyle(color: textDark, fontWeight: FontWeight.w500),
+        style: TextStyle(color: textDark, fontWeight: FontWeight.w500, fontSize: 15),
         decoration: InputDecoration(
-          hintText: "Nama lengkap sesuai identitas",
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.badge_outlined, color: primaryBlue),
-          border: InputBorder.none,
+          hintText: "Tulis nama lengkap sesuai KTP / Passport",
+          hintStyle: TextStyle(color: textMuted.withOpacity(0.6), fontSize: 14),
+          prefixIcon: Icon(Icons.assignment_ind_outlined, color: textMuted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade100),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: accentBlue, width: 1.5),
+          ),
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         ),
       ),
@@ -152,8 +168,8 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _buildTicketList() {
-    return FutureBuilder(
-      future: ApiService.getTickets(),
+    return FutureBuilder<List<dynamic>>(
+      future: _futureTickets, 
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: Padding(
@@ -161,19 +177,20 @@ class _BookingPageState extends State<BookingPage> {
             child: CircularProgressIndicator(),
           ));
         }
-        if (!snapshot.hasData) return const Center(child: Text("Gagal memuat tiket"));
+        if (snapshot.hasError || !snapshot.hasData) return const Center(child: Text("Gagal memuat tiket"));
         
-        _cachedTickets = snapshot.data as List;
+        _cachedTickets = snapshot.data!;
         return ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _cachedTickets.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) => _buildModernTicketCard(_cachedTickets[index]),
         );
       },
     );
   }
+  // ==========================================
 
   Widget _buildModernTicketCard(Map t) {
     int id = t['id'];
