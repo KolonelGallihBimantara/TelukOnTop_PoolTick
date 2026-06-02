@@ -15,6 +15,7 @@ class _BookingPageState extends State<BookingPage> {
   
   late Future<List<dynamic>> _futureTickets;
 
+  // Palette Warna Premium (Slate & Royal Blue)
   final Color primaryBlue = const Color(0xFF0F172A); 
   final Color accentBlue = const Color(0xFF2563EB);  
   final Color bgGray = const Color(0xFFF8FAFC);      
@@ -25,6 +26,7 @@ class _BookingPageState extends State<BookingPage> {
   @override
   void initState() {
     super.initState();
+    // Cache future di initState demi performa (tidak re-fetch saat setState)
     _futureTickets = ApiService.getTickets().then((value) => value as List<dynamic>);
   }
 
@@ -61,7 +63,7 @@ class _BookingPageState extends State<BookingPage> {
                       const SizedBox(height: 32),
                       _buildSectionHeader("Katalog Tiket", Icons.confirmation_number_outlined),
                       const SizedBox(height: 16),
-                      _buildTicketList(),
+                      _buildTicketList(), // Langsung memuat list seadanya dari CMS
                     ],
                   ),
                 ),
@@ -81,8 +83,7 @@ class _BookingPageState extends State<BookingPage> {
       elevation: 0,
       stretch: true,
       backgroundColor: primaryBlue,
-      // TAMBAHAN: Memaksa semua icon bawaan AppBar (termasuk tombol Back) berwarna putih
-      iconTheme: const IconThemeData(color: Colors.white), 
+      iconTheme: const IconThemeData(color: Colors.white), // Memastikan tombol back berwarna putih
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
@@ -190,55 +191,128 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
-  // ==========================================
-  // PERUBAHAN TAHAP 3: Tampilan Cards, Floating Bar, & Logic Transaksi
-  // ==========================================
   Widget _buildModernTicketCard(Map t) {
     int id = t['id'];
     int qty = _cart[id] ?? 0;
     bool isSelected = qty > 0;
 
+    // DINAMIS LOGIC: Cek tipe tiket dari string nama secara dinamis dari CMS
+    String ticketName = t['name'].toString().toLowerCase();
+    bool isChild = ticketName.contains('anak') || ticketName.contains('child');
+    bool isSenior = ticketName.contains('lansia') || ticketName.contains('senior');
+
+    // PERBAIKAN: Mengubah tipe data menjadi MaterialColor agar bisa menggunakan .shade700
+    MaterialColor badgeColor = Colors.green;
+    IconData ticketIcon = Icons.face_rounded;
+    String badgeLabel = "Dewasa";
+
+    if (isChild) {
+      badgeColor = Colors.orange;
+      ticketIcon = Icons.child_care_rounded;
+      badgeLabel = "Anak";
+    } else if (isSenior) {
+      badgeColor = Colors.purple;
+      ticketIcon = Icons.elderly_rounded;
+      badgeLabel = "Lansia";
+    }
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: surfaceWhite,
         borderRadius: BorderRadius.circular(20),
-        // Interaktivitas UI: Border tipis menyala biru ketika item dipilih
         border: Border.all(color: isSelected ? accentBlue : Colors.grey.shade100, width: isSelected ? 1.5 : 1),
         boxShadow: [
           BoxShadow(
-            color: isSelected ? accentBlue.withOpacity(0.05) : const Color(0xFF1E293B).withOpacity(0.02), 
+            color: isSelected ? accentBlue.withOpacity(0.06) : const Color(0xFF1E293B).withOpacity(0.02), 
             blurRadius: 12, 
             offset: const Offset(0, 4)
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            height: 52, width: 52,
-            decoration: BoxDecoration(
-              color: isSelected ? accentBlue.withOpacity(0.1) : bgGray, 
-              borderRadius: BorderRadius.circular(14)
+          // Aksen Lubang Tiket Estetik (Kiri)
+          Positioned(
+            left: -8, top: 0, bottom: 0,
+            child: Center(
+              child: Container(
+                width: 16, height: 16,
+                decoration: BoxDecoration(color: bgGray, shape: BoxShape.circle),
+              ),
             ),
-            child: Icon(Icons.local_activity_outlined, color: isSelected ? accentBlue : textMuted, size: 24),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Aksen Lubang Tiket Estetik (Kanan)
+          Positioned(
+            right: -8, top: 0, bottom: 0,
+            child: Center(
+              child: Container(
+                width: 16, height: 16,
+                decoration: BoxDecoration(color: bgGray, shape: BoxShape.circle),
+              ),
+            ),
+          ),
+          
+          // Konten Utama Tiket Card
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Row(
               children: [
-                Text(t['name'], style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textDark)),
-                const SizedBox(height: 4),
-                Text(
-                  "Rp ${t['price']}", 
-                  style: TextStyle(color: accentBlue, fontWeight: FontWeight.w700, fontSize: 14)
+                // Icon Box
+                Container(
+                  height: 52, width: 52,
+                  decoration: BoxDecoration(
+                    color: isSelected ? accentBlue.withOpacity(0.1) : bgGray, 
+                    borderRadius: BorderRadius.circular(14)
+                  ),
+                  child: Icon(ticketIcon, color: isSelected ? accentBlue : textMuted, size: 24),
                 ),
+                const SizedBox(width: 16),
+                
+                // Info Teks Tiket
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              t['name'], 
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textDark),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Badge Kategori Otomatis
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badgeLabel,
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: badgeColor.shade700),
+                            ),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Rp ${t['price']}", 
+                        style: TextStyle(color: accentBlue, fontWeight: FontWeight.w700, fontSize: 14)
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Selector Jumlah (+ / -)
+                _buildQtySelector(id, qty),
               ],
             ),
           ),
-          _buildQtySelector(id, qty),
         ],
       ),
     );
@@ -484,16 +558,17 @@ class _BookingPageState extends State<BookingPage> {
         bool res = await ApiService.beliTiket(id, buyerController.text);
         if (!res) {
           allOk = false;
-          break; // Pembatasan loop jika terjadi kegagalan sekuensial API
+          break; 
         }
       }
     }
 
     if (!mounted) return;
-    Navigator.pop(context); // Tutup Loading
+    Navigator.pop(context); 
 
     if (allOk) {
-      _showSnack("Transaksi Berhasil! Tiket Anda telah dipesan via $method.", Colors.green);      setState(() => _cart.clear());
+      _showSnack("Transaksi Berhasil! Tiket Anda telah dipesan via $method.", Colors.green);
+      setState(() => _cart.clear());
       buyerController.clear();
     } else {
       _showSnack("Mohon maaf, terjadi gangguan saat memesan sebagian tiket.", Colors.redAccent);
