@@ -1,4 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
+
 import { ApiKeyMiddleware } from './common/middleware/api-key.middleware';
 
 import { AppController } from './app.controller';
@@ -21,8 +27,27 @@ import { PrismaModule } from './prisma/prisma.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(ApiKeyMiddleware).forRoutes(
-      'tickets',
-      'transactions',
+
+      // ADMIN TICKETS
+      {
+        path: 'tickets',
+        method: RequestMethod.POST,
+      },
+      {
+        path: 'tickets/:id',
+        method: RequestMethod.PATCH,
+      },
+      {
+        path: 'tickets/:id',
+        method: RequestMethod.DELETE,
+      },
+
+      // ADMIN TRANSACTIONS
+      {
+        path: 'transactions',
+        method: RequestMethod.GET,
+      },
+
     );
   }
 }
