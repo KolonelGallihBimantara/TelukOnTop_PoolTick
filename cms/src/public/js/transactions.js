@@ -79,20 +79,40 @@ function renderTransactions(transactions) {
 
 // Menghapus satu data transaksi
 function hapusTransaksi(id) {
-  fetch(`${API_TRANSACTIONS}/${id}`, {method:'DELETE'}).then(loadData);
+  fetch(`${API_TRANSACTIONS}/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  }).then(loadData);
 }
 
 // Menghapus seluruh riwayat transaksi
 async function hapusSemuaTransaksi() {
   if (!confirm("Hapus seluruh riwayat transaksi?")) return;
-  const trx = await fetch(API_TRANSACTIONS).then(r => r.json());
-  for (let t of trx) { await fetch(`${API_TRANSACTIONS}/${t.id}`, { method: 'DELETE' }); }
+  const trx = await fetch(API_TRANSACTIONS, {
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  }).then(r => r.json());
+  for (let t of trx) { 
+    await fetch(`${API_TRANSACTIONS}/${t.id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-api-key': 'kolamrenang2026'
+      }
+    });
+  }
   loadData();
 }
 
 // Fungsi untuk download data ke format Excel .xlsx
 async function downloadExcel() {
-  const transactions = await fetch(API_TRANSACTIONS).then(r => r.json());
+  const transactions = await fetch(API_TRANSACTIONS, {
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  }).then(r => r.json());
 
   //GROUPING
   const grouped = {};
