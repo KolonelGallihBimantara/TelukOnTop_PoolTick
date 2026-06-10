@@ -56,7 +56,11 @@ async function submitTiket() {
   const url = id ? `${API_TICKETS}/${id}` : API_TICKETS;
 
   await fetch(url, {
-    method, headers: {'Content-Type':'application/json'},
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'kolamrenang2026'
+    },
     body: JSON.stringify({ name, price })
   });
   resetForm();
@@ -75,8 +79,17 @@ function resetForm() {
 // Menghapus tiket dari katalog (dengan validasi apakah sudah ada transaksi atau belum)
 async function hapusTiket(id) {
   if (!confirm("Hapus tiket ini dari katalog?")) return;
-  const trx = await fetch(API_TRANSACTIONS).then(r => r.json());
+  const trx = await fetch(API_TRANSACTIONS, {
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  }).then(r => r.json());
   if (trx.some(t => t.ticketId == id)) return alert("Gagal: Tiket ini masih memiliki data transaksi!");
-  await fetch(`${API_TICKETS}/${id}`, { method: 'DELETE' });
+  await fetch(`${API_TICKETS}/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  });
   loadData();
 }
