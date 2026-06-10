@@ -6,7 +6,11 @@ async function beliSemua() {
   const selectedTickets = Object.keys(qtyMap).filter(id => qtyMap[id] > 0);
   if (selectedTickets.length === 0) return alert("Pilih minimal 1 tiket!");
 
-  const tickets = await fetch(API_TICKETS).then(r => r.json());
+  const tickets = await fetch(API_TICKETS, {
+    headers: {
+      'x-api-key': 'kolamrenang2026'
+    }
+  }).then(r => r.json());
 
   // Looping untuk mengirim setiap tiket yang dibeli ke API transaksi
   for (let id of selectedTickets) {
@@ -14,9 +18,16 @@ async function beliSemua() {
     const qty = qtyMap[id];
     for (let i = 0; i < qty; i++) {
       await fetch(API_TRANSACTIONS, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'x-api-key': 'kolamrenang2026'
+        },
         body: JSON.stringify({
-          ticketId: t.id, name: buyer, price: t.price, createdAt: new Date().toISOString()
+          ticketId: t.id,
+          name: buyer,
+          price: t.price,
+          createdAt: new Date().toISOString()
         })
       });
     }
